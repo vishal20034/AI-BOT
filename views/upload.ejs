@@ -1,0 +1,46 @@
+<%- include('partials/header') %>
+
+<div class="page-head">
+  <h1>Resume</h1>
+  <p>Upload your resume PDF once. It is automatically attached to every outreach email.</p>
+</div>
+
+<% if (message) { %>
+  <div class="alert alert-success"><%= message %></div>
+<% } %>
+<% if (error) { %>
+  <div class="alert alert-error"><%= error %></div>
+<% } %>
+
+<section class="panel">
+  <div class="panel-head">
+    <h2>Current Resume</h2>
+  </div>
+  <div class="panel-body">
+    <% if (resume) { %>
+      <div class="resume-current">
+        <span class="pdf-icon">PDF</span>
+        <div>
+          <div class="contact-strong"><%= resume.filename %></div>
+          <div class="cell-sub">Uploaded <%= new Date(resume.uploadedAt).toLocaleString() %></div>
+        </div>
+        <a class="btn btn-sm" style="margin-left:auto" href="/uploads/<%= resume.filename %>" target="_blank" rel="noopener">View</a>
+      </div>
+    <% } else { %>
+      <p class="muted">No resume uploaded yet. Upload one below to enable automated emails.</p>
+    <% } %>
+
+    <form action="/upload" method="POST" enctype="multipart/form-data">
+      <div class="upload-box">
+        <div class="contact-strong">Choose a PDF resume</div>
+        <input type="file" name="resume" accept="application/pdf,.pdf" required />
+        <div class="cell-sub">Max 8&nbsp;MB · PDF only · Uploading replaces the existing resume</div>
+        <div style="margin-top:16px">
+          <button class="btn btn-primary" type="submit">Upload Resume</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</section>
+
+<%- include('partials/footer') %>
