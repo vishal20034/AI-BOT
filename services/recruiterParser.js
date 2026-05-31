@@ -105,8 +105,16 @@ function detectContacts(text = '') {
   // ---- Name ----
   const nameMatch = text.match(NAME_LABEL_RE);
   if (nameMatch && nameMatch[1]) {
-    result.name = nameMatch[1].trim();
-  } else if (result.email) {
+    // The label part of NAME_LABEL_RE is case-insensitive, which lets the
+    // captured group pick up trailing lowercase words (e.g. "Priya Sharma at").
+    // Keep only the leading capitalised words so we get a clean person name.
+    result.name = nameMatch[1]
+      .trim()
+      .split(/\s+/)
+      .filter((w) => /^[A-Z]/.test(w))
+      .join(' ');
+  }
+  if (!result.name && result.email) {
     // Fall back to a readable name derived from the email local-part
     const local = result.email.split('@')[0].replace(/[._\d]+/g, ' ').trim();
     if (local && /^[a-zA-Z ]{3,}$/.test(local)) {
