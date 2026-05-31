@@ -53,10 +53,17 @@ async function upsertJob(raw) {
   let job = await Job.findOne(query);
   const status = contacts.email ? 'pending' : 'no_contact';
 
+  // Prefer an explicit company from the source; otherwise fall back to a
+  // company name detected in the post / description text.
+  const resolvedCompany =
+    raw.company && raw.company !== 'Unknown'
+      ? raw.company
+      : contacts.company || raw.company || 'Unknown';
+
   if (!job) {
     job = await Job.create({
       title: raw.title,
-      company: raw.company || 'Unknown',
+      company: resolvedCompany,
       location: raw.location || '',
       description: raw.description || '',
       postingDate: raw.postingDate || '',
@@ -75,6 +82,10 @@ async function upsertJob(raw) {
   let changed = false;
   if (!job.description && raw.description) {
     job.description = raw.description;
+    changed = true;
+  }
+  if ((!job.company || job.company === 'Unknown') && resolvedCompany !== 'Unknown') {
+    job.company = resolvedCompany;
     changed = true;
   }
   if (!job.recruiterEmail && contacts.email) {
