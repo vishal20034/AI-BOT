@@ -110,9 +110,21 @@ async function sendOutreachEmail(job) {
     return { sent: false, reason: 'already_sent' };
   }
 
+  // Always read the latest resume dynamically from /uploads. If one exists it
+  // is attached to EVERY outgoing email via Nodemailer's attachments array.
+  // If none is found we log a warning and still send the email (no crash).
   const resume = getCurrentResume();
-  if (!resume) {
-    return { sent: false, reason: 'no_resume_uploaded' };
+  const attachments = [];
+  if (resume) {
+    attachments.push({
+      filename: resume.filename,
+      path: resume.path,
+      contentType: 'application/pdf',
+    });
+  } else {
+    console.warn(
+      `[mailer] No resume found in /uploads — sending email to ${recruiterEmail} WITHOUT an attachment.`
+    );
   }
 
   const { subject, text, html } = buildEmailContent(job);
@@ -124,13 +136,7 @@ async function sendOutreachEmail(job) {
     subject,
     text,
     html,
-    attachments: [
-      {
-        filename: resume.filename,
-        path: resume.path,
-        contentType: 'application/pdf',
-      },
-    ],
+    attachments,
   };
 
   try {
@@ -151,7 +157,7 @@ async function sendOutreachEmail(job) {
       company: job.company || '',
       subject,
       body: text,
-      resumeFile: resume.filename,
+      resumeFile: resume ? resume.filename : '',
       sentAt: new Date(),
     });
   } catch (err) {
