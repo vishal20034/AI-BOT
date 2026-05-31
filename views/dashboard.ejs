@@ -1,0 +1,196 @@
+<%- include('partials/header') %>
+
+<div class="page-head">
+  <h1>Job Outreach Dashboard</h1>
+  <p>Automated fresher / entry-level (0–1 yr) job search &amp; recruiter outreach for <%= candidate.name %>.</p>
+</div>
+
+<% if (!resume) { %>
+  <div class="alert alert-error">
+    No resume uploaded yet. Auto-emails will be skipped until you
+    <a href="/upload">upload your resume PDF</a>.
+  </div>
+<% } %>
+
+<!-- Stat cards -->
+<section class="stats-grid">
+  <div class="stat-card blue">
+    <div class="stat-label">Total Jobs Found</div>
+    <div class="stat-value" id="stat-jobs"><%= stats.totalJobs %></div>
+  </div>
+  <div class="stat-card green">
+    <div class="stat-label">Emails Sent</div>
+    <div class="stat-value" id="stat-emails"><%= stats.totalEmails %></div>
+  </div>
+  <div class="stat-card blue">
+    <div class="stat-label">Recruiters With Phone</div>
+    <div class="stat-value" id="stat-phones"><%= stats.totalRecruitersWithPhone %></div>
+  </div>
+  <div class="stat-card amber">
+    <div class="stat-label">Pending Applications</div>
+    <div class="stat-value" id="stat-pending"><%= stats.totalPending %></div>
+  </div>
+</section>
+
+<!-- Search panel -->
+<section class="panel">
+  <div class="panel-head">
+    <h2>Search Jobs</h2>
+    <span class="search-note">Always restricted to fresher / entry level / 0–1 year experience.</span>
+  </div>
+  <div class="panel-body">
+    <div class="search-bar">
+      <div class="field">
+        <label for="search-location">Location</label>
+        <select id="search-location" class="input">
+          <option value="">All locations</option>
+          <% locations.forEach(function(loc){ %>
+            <option value="<%= loc %>"><%= loc %></option>
+          <% }); %>
+        </select>
+      </div>
+      <div class="field">
+        <label for="search-titles">Job titles (optional, comma separated)</label>
+        <input
+          id="search-titles"
+          class="input"
+          style="min-width:320px"
+          placeholder="Leave empty to search all <%= jobTitles.length %> target titles"
+        />
+      </div>
+      <div class="search-actions">
+        <button id="btn-search" class="btn btn-primary" type="button">
+          Search Jobs
+        </button>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Live search status -->
+<div id="search-status" class="search-status<%= searchState.running ? ' show' : '' %>">
+  <span class="spinner"></span>
+  <span id="search-status-text">Searching job boards…</span>
+</div>
+
+<!-- Filters + jobs table -->
+<section class="panel">
+  <div class="panel-head">
+    <h2>Jobs <span class="tag" id="jobs-count"><%= jobs.length %></span></h2>
+    <form class="filters-form" method="GET" action="/">
+      <div class="field">
+        <label for="f-keyword">Title keyword</label>
+        <input id="f-keyword" name="keyword" class="input" value="<%= filters.keyword %>" placeholder="e.g. DevOps" />
+      </div>
+      <div class="field">
+        <label for="f-location">Location</label>
+        <select id="f-location" name="location" class="input">
+          <option value="all"<%= filters.location === 'all' ? ' selected' : '' %>>All</option>
+          <% locations.forEach(function(loc){ %>
+            <option value="<%= loc %>"<%= filters.location === loc ? ' selected' : '' %>><%= loc %></option>
+          <% }); %>
+        </select>
+      </div>
+      <div class="field">
+        <label for="f-status">Status</label>
+        <select id="f-status" name="status" class="input">
+          <option value=""<%= filters.status === '' ? ' selected' : '' %>>Any</option>
+          <option value="applied"<%= filters.status === 'applied' ? ' selected' : '' %>>Applied</option>
+          <option value="pending"<%= filters.status === 'pending' ? ' selected' : '' %>>Pending</option>
+          <option value="no_contact"<%= filters.status === 'no_contact' ? ' selected' : '' %>>No Contact Found</option>
+        </select>
+      </div>
+      <div class="field checkbox-field">
+        <input type="checkbox" id="f-contact" name="contactOnly" value="true" <%= filters.contactOnly ? 'checked' : '' %> />
+        <label for="f-contact">Only with recruiter contact</label>
+      </div>
+      <button class="btn" type="submit">Apply Filters</button>
+      <a class="btn" href="/">Reset</a>
+    </form>
+  </div>
+
+  <div class="table-wrap">
+    <% if (!jobs.length) { %>
+      <div class="empty">
+        <h3>No jobs yet</h3>
+        <p>Click <strong>Search Jobs</strong> above to scrape LinkedIn, Naukri, Indeed, Internshala &amp; Google for fresher roles.</p>
+      </div>
+    <% } else { %>
+      <table class="jobs">
+        <thead>
+          <tr>
+            <th>Job Title</th>
+            <th>Company</th>
+            <th>Location</th>
+            <th>Recruiter</th>
+            <th>Email</th>
+            <th>Phone</th>
+            <th>Status</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% jobs.forEach(function(job){ %>
+            <tr>
+              <td>
+                <div class="cell-title">
+                  <% if (job.url) { %>
+                    <a href="<%= job.url %>" target="_blank" rel="noopener"><%= job.title %></a>
+                  <% } else { %>
+                    <%= job.title %>
+                  <% } %>
+                </div>
+                <div class="cell-sub"><%= job.source || 'Unknown source' %><%= job.postingDate ? ' · ' + job.postingDate : '' %></div>
+              </td>
+              <td><%= job.company || '—' %></td>
+              <td><%= job.location || '—' %></td>
+              <td>
+                <% if (job.recruiterName) { %>
+                  <span class="contact-strong"><%= job.recruiterName %></span>
+                <% } else { %>
+                  <span class="muted">—</span>
+                <% } %>
+              </td>
+              <td>
+                <% if (job.recruiterEmail) { %>
+                  <a class="mono" href="mailto:<%= job.recruiterEmail %>"><%= job.recruiterEmail %></a>
+                <% } else { %>
+                  <span class="muted">—</span>
+                <% } %>
+              </td>
+              <td>
+                <% if (job.recruiterPhone) { %>
+                  <span class="mono contact-strong"><%= job.recruiterPhone %></span>
+                <% } else { %>
+                  <span class="muted">—</span>
+                <% } %>
+              </td>
+              <td>
+                <% if (job.status === 'applied') { %>
+                  <span class="badge badge-applied"><span class="dot"></span>Applied</span>
+                <% } else if (job.status === 'pending') { %>
+                  <span class="badge badge-pending"><span class="dot"></span>Pending</span>
+                <% } else { %>
+                  <span class="badge badge-none"><span class="dot"></span>No Contact</span>
+                <% } %>
+              </td>
+              <td>
+                <% if (job.recruiterEmail && !job.emailSent) { %>
+                  <button class="btn btn-sm btn-primary btn-send" data-id="<%= job._id %>">Send Email</button>
+                <% } else if (job.emailSent) { %>
+                  <span class="muted">Sent ✓</span>
+                <% } else { %>
+                  <span class="muted">—</span>
+                <% } %>
+              </td>
+            </tr>
+          <% }); %>
+        </tbody>
+      </table>
+    <% } %>
+  </div>
+</section>
+
+<div id="toast"></div>
+
+<%- include('partials/footer') %>

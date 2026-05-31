@@ -1,0 +1,17 @@
+# Dependencies
+node_modules/
+
+# Logs
+*.log
+npm-debug.log*
+
+# Uploaded resumes (keep the folder, ignore the files)
+uploads/*
+!uploads/.gitkeep
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# NOTE: .env IS intentionally committed because you asked for a clone-and-run
+# project with credentials already filled in. See the SECURITY note in README.md.

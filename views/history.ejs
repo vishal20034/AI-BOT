@@ -1,0 +1,44 @@
+<%- include('partials/header') %>
+
+<div class="page-head">
+  <h1>Application History</h1>
+  <p>Every outreach email sent, newest first. <span class="tag"><%= emails.length %> sent</span></p>
+</div>
+
+<section class="panel">
+  <div class="panel-body">
+    <% if (!emails.length) { %>
+      <div class="empty">
+        <h3>No emails sent yet</h3>
+        <p>Run a job search from the <a href="/">dashboard</a>. Emails are sent automatically when a recruiter email is detected.</p>
+      </div>
+    <% } else { %>
+      <% emails.forEach(function(mail){ %>
+        <article class="email-card">
+          <div class="email-card-head">
+            <div>
+              <div class="to">
+                To: <span class="mono"><%= mail.recruiterEmail %></span>
+                <% if (mail.recruiterName) { %><span class="muted">(<%= mail.recruiterName %>)</span><% } %>
+              </div>
+              <div class="email-meta">
+                <%= mail.jobTitle || 'Role' %><%= mail.company && mail.company !== 'Unknown' ? ' · ' + mail.company : '' %>
+              </div>
+            </div>
+            <div class="email-meta">
+              <%= new Date(mail.sentAt).toLocaleString() %>
+            </div>
+          </div>
+          <% if (mail.subject) { %>
+            <div class="email-card-head" style="background:transparent;border-bottom:none;padding-bottom:0">
+              <div class="email-meta"><strong>Subject:</strong> <%= mail.subject %></div>
+            </div>
+          <% } %>
+          <div class="email-body"><%= mail.body %></div>
+        </article>
+      <% }); %>
+    <% } %>
+  </div>
+</section>
+
+<%- include('partials/footer') %>
